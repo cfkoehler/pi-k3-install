@@ -1,10 +1,10 @@
 [master]
-c-m ansible_connection=local var_hostname=c-m var_disk=sdb var_uuid=27206e5a-93f1-4099-a4c3-c9089d6b4180
+c-m ansible_connection=local var_hostname=c-m var_storage=true var_disk=sdb
 
 [node]
-c-w1 ansible_connection=ssh var_hostname=c-w1 var_disk=sdb var_uuid=4cda9959-3384-426e-b307-dcb95928989b
-c-w2 ansible_connection=ssh var_hostname=c-w2 var_disk=sdb var_uuid=697d797c-a1f5-4914-9792-b6d3a19c03fd
-c-w3 ansible_connection=ssh var_hostname=c-w3 var_disk=sdb var_uuid=5cfdb636-797a-4fc7-887f-731e165f3086
+c-w1 ansible_connection=ssh var_hostname=c-w1 var_storage=true var_disk=sdb
+c-w2 ansible_connection=ssh var_hostname=c-w2 var_storage=true var_disk=sdb
+c-w3 ansible_connection=ssh var_hostname=c-w3 var_storage=true var_disk=sdb
 
 [all:children]
 master

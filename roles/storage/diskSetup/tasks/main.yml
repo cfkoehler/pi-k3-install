@@ -1,0 +1,42 @@
+---
+
+- name: Install nfs-common
+  ansible.builtin.apt:
+    name: nfs-common
+    state: present
+
+- name: Install open-iscsi
+  ansible.builtin.apt:
+    name: open-iscsi
+    state: present
+
+- name: Install util-linux
+  ansible.builtin.apt:
+    name: util-linux
+    state: present
+
+- name: Wipe Storage Drives
+  shell: wipefs -a /dev/{{ var_disk }}
+
+- name: Format Storage Drives
+  filesystem:
+    fstype: ext4
+    dev: /dev/{{ var_disk }}
+
+- name: Get Storage Drive UUID
+  shell: blkid -s UUID -o value /dev/{{ var_disk }}
+  register: var_uuid
+
+- name: Create longhorn mount path
+  file:
+    path: /var/lib/longhorn
+    state: directory
+    owner: root
+    group: root
+
+- name: Mount Storage Drives
+  mount: 
+    path: /var/lib/longhorn
+    src: UUID={{ var_uuid.stdout }}
+    fstype: ext4
+    state: mounted
