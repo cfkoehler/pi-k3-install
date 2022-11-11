@@ -1,0 +1,15 @@
+---
+
+- name: Add role=worker
+  shell: kubectl label nodes {{ item }} kubernetes.io/role=worker
+  with_items:
+    - "{{ groups['node'] }}"
+  run_once: true
+  when: inventory_hostname in groups["master"]
+
+- name: Add node-type=worker
+  shell: kubectl label nodes {{ inventory_hostname }} node-type=worker
+  with_items:
+    - "{{ groups['node'] }}"
+  run_once: true
+  when: inventory_hostname in groups["master"]
