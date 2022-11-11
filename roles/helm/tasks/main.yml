@@ -1,0 +1,29 @@
+---
+
+- name: Create helm directory
+  file:
+    path: ~/helm
+    state: directory
+    owner: root
+    group: root
+
+- name: Download helm installer
+  get_url:
+    url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    dest: /tmp/get_helm.sh
+    owner: root
+    group: root
+    mode: 700
+
+- name: Execute get_helm.sh
+  command: sh /tmp/get_helm.sh
+
+- name: Check that helm is installed
+  command: helm version
+  register: helm_version
+  ignore_errors: true
+
+- name: Remove helm installer
+  file:
+    state: absent
+    path: /tmp /get_helm.sh
