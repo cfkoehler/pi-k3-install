@@ -1,0 +1,14 @@
+---
+
+- name: Install ansible kuberentes package
+  shell: ansible-galaxy collection install kubernetes.core
+  run_once: true
+
+- name: Install metalLB
+  include_tasks: metallb.yml
+
+- name: Install longhorn
+  include_tasks: longhorn.yml
+
+- name: Install docker-registry
+  include_tasks: docker-registry.yml

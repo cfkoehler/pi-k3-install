@@ -6,6 +6,7 @@
     - "{{ groups['node'] }}"
   run_once: true
   when: inventory_hostname in groups["master"]
+  ignore_errors: true
 
 - name: Add node-type=worker
   shell: kubectl label nodes {{ inventory_hostname }} node-type=worker
@@ -13,3 +14,4 @@
     - "{{ groups['node'] }}"
   run_once: true
   when: inventory_hostname in groups["master"]
+  ignore_errors: true

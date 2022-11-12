@@ -1,0 +1,19 @@
+---
+
+- name: Install MetalLB for namespace
+  shell: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
+  run_once: true
+
+- name: Install MetalLB Configuration
+  shell: kubectl apply -f ~/pi-k3-install/k3s-configs/MetalLB/config.yaml
+  run_once: true
+
+- name: Install MetalLB
+  shell: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/metallb.yaml
+  run_once: true
+  ignore_errors: true
+
+- name: Create MetalLB Secret
+  shell: kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
+  run_once: true
+  ignore_errors: true

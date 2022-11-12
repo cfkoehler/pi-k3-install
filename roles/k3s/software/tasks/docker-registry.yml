@@ -1,0 +1,12 @@
+---
+
+- name: Install docker-registry
+  shell: kubectl apply -f ~/pi-k3-install/k3s-configs/docker-registry/*
+  run_once: true
+
+- name: Add DNS to /etc/hosts
+  shell: echo "192.168.0.202 registry registry.cube.local" >> /etc/hosts
+  run_once: true
+
+## TODO: Need to get the /etc/hosts copied to all other nodes
+## ansible all -b -m copy -a "src=/etc/hosts dest=/etc/hosts"

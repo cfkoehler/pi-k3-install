@@ -1,0 +1,10 @@
+{
+    "exec-opts": ["native.cgroupdriver=systemd"],
+    "insecure-registries": ["registry.cube.local:5000"],
+    "experimental": true,
+    "log-driver": "json-file",
+    "storage-driver": "overlay2",
+    "log-opts": {
+      "max-size": "100m"
+    }
+  }
