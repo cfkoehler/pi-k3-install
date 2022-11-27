@@ -3,5 +3,5 @@ k3s_version: v1.24.7+k3s1
 master_ip: "{{ hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0]) }}"
 ansible_user: root
 systemd_dir: /etc/systemd/system
-extra_server_args: "--write-kubeconfig-mode 644 --disable servicelb --node-taint CriticalAddonsOnly=true:NoExecute --disable-cloud-controller --disable local-storage"
+extra_server_args: "--write-kubeconfig-mode 644 --disable servicelb --node-taint CriticalAddonsOnly=true:NoExecute --bind-address 192.168.3.10 --disable-cloud-controller --disable local-storage"
 extra_agent_args: ""

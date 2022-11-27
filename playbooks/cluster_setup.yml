@@ -24,7 +24,7 @@
   roles:
     - role: k3s/all
 
-- hosts: master
-  become: yes
-  roles:
-    - role: k3s/software
+# - hosts: master
+#   become: yes
+#   roles:
+#     - role: k3s/software

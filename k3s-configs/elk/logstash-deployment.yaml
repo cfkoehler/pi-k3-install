@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: logstash-deployment
-  namespace: kube-system
+  namespace: monitoring
 spec:
   selector:
     matchLabels:
@@ -41,7 +41,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: logstash-service
-  namespace: kube-system
+  namespace: monitoring
 spec:
   selector:
     app: logstash

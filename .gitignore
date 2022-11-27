@@ -1,1 +1,3 @@
 playbooks/testing.yml
+k3s-configs/docker-registry/registry.crt
+k3s-configs/docker-registry/registry.key
