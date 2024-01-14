@@ -1,5 +1,5 @@
 [master]
-c-m1 ansible_connection=local var_hostname=c-m1 var_storage=false var_disk=sdb
+c-m1 ansible_connection=local var_hostname=c-m1 var_storage=false
 
 [node]
 c-w1 ansible_connection=ssh var_hostname=c-w1 var_storage=true var_disk=sdb

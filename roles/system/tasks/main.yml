@@ -15,7 +15,7 @@
 
 - name: "Create SSH Keys for each account"
   community.crypto.openssh_keypair:
-    path: ~/.ssh/{{ item }}
+    path: ~/.ssh/{{ item }}.key
   with_items: "{{ users }}"
 
 - name: "Add authorized keys"
