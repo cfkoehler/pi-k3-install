@@ -1,0 +1,5 @@
+longhorn:
+  defaultSettings:
+    defaultDataPath: "/var/lib/longhorn"
+    priorityClass: high-priority
+    
