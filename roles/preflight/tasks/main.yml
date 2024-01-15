@@ -10,3 +10,12 @@
     path: /etc/environment'
     line: 'KUBECONFIG=/etc/rancher/k3s/k3s.yaml'
   ignore_errors: true
+
+- name: Add IP address of all hosts to all hosts
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '.*{{ item }}$'
+    line: "{{ hostvars[item].ansible_host }} {{item}}"
+    state: present
+  when: hostvars[item].ansible_host is defined
+  with_items: "{{ groups.all }}"

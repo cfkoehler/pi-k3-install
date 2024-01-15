@@ -1,0 +1,16 @@
+--- 
+users:
+  - dev
+  - monitor
+  # - username: cluster
+  #   use_sduo:
+  #   use_uid: 1010
+  #   use_group: dev
+  # - username: dev
+  #   use_sduo:
+  #   use_uid: 1011
+  #   use_group: dev
+  # - username: monitor
+  #   use_sduo:
+  #   use_uid: 1012
+  #   use_group: dev
