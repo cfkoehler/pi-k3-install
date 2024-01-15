@@ -2,4 +2,6 @@ longhorn:
   defaultSettings:
     defaultDataPath: "/var/lib/longhorn"
     priorityClass: high-priority
-    systemManagedComponentsNodeSelector: "storage:longhorn"
+  longhornManager:
+    nodeSelector:
+      storage: "longhorn"
