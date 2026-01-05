@@ -1,0 +1,8 @@
+127.0.0.1 localhost
+
+192.168.3.10 c-m1 c-m1.local
+
+192.168.0.11 c-w1 c-w1.local
+192.168.0.12 c-w2 c-w2.local
+192.168.0.13 c-w3 c-w3.local
+192.168.0.14 c-w4 c-w4.local
