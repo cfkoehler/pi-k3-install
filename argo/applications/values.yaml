@@ -133,7 +133,7 @@ metricbeat:
             - state_cronjob
             - state_job
           period: 10s
-          hosts: ["kube-state-metrics.monitoring.svc:8443"]
+          hosts: ["applications-kube-state-metrics.monitoring.svc:8080"]
           bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
           ssl.verification_mode: "none"
 
