@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: git@github.com:cfkoehler/pi-k3-install.git
+    repoURL: https://github.com/cfkoehler/pi-k3-install.git
     targetRevision: main
     path: argo/applications
     helm:

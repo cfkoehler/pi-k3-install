@@ -113,12 +113,20 @@ cd argo/longhorn && helm dependency update
 
 **Note**: Many of these are legacy manifests. New deployments should use ArgoCD for GitOps-based management.
 
-**argo/** - Helm charts for GitOps deployment:
-- `applications/`: Parent chart for application deployments (currently Grafana via requirements.yaml)
-- `longhorn/`: Longhorn storage deployment chart with custom values:
+**argo/** - Helm charts managed by ArgoCD for GitOps deployment:
+- `applications/`: Umbrella chart for application deployments managed by the `applications` ArgoCD Application
+  - Currently deploys: Grafana 7.2.1 to monitoring namespace
+  - Uses Helm dependencies pattern (requirements.yaml)
+  - ArgoCD auto-syncs changes from main branch
+  - Add new apps by updating requirements.yaml and values.yaml, then commit/push
+- `longhorn/`: Longhorn storage deployment chart with custom values (not yet managed by ArgoCD):
   - Default data path: `/var/lib/longhorn`
   - longhornManager nodeSelector requires `storage: "longhorn"` label
   - Priority class: high-priority
+
+**k3s-configs/argocd-apps/** - ArgoCD Application manifests:
+- `applications.yaml`: Manages the argo/applications umbrella chart
+- Add new Application manifests here for standalone deployments
 
 ### Cluster Configuration Details
 
@@ -153,35 +161,76 @@ Edit `extra_server_args` in `group_vars/all.yml`. Common flags:
 - `--bind-address <ip>`: API server bind address
 
 ### Deploying New Applications via ArgoCD
-All applications should be deployed through ArgoCD for GitOps workflow:
+All applications should be deployed through ArgoCD for GitOps workflow using the `argo/applications` Helm chart pattern.
 
-1. **Create ArgoCD Application manifest**:
+**Current Setup**:
+- Grafana is deployed via the `applications` ArgoCD Application
+- This Application manages the `argo/applications` Helm chart which uses Helm dependencies
+- Grafana runs in the `monitoring` namespace (ClusterIP service on port 80)
+
+**To add a new application**:
+
+1. **Add Helm chart dependency** to `argo/applications/requirements.yaml`:
    ```yaml
-   apiVersion: argoproj.io/v1alpha1
-   kind: Application
-   metadata:
-     name: <app-name>
-     namespace: argocd
-   spec:
-     project: default
-     source:
-       repoURL: <git-repo-url>
-       targetRevision: HEAD
-       path: <path-to-manifests>
-     destination:
-       server: https://kubernetes.default.svc
-       namespace: <target-namespace>
-     syncPolicy:
-       automated:
-         prune: true
-         selfHeal: true
+   dependencies:
+     - name: grafana
+       version: 7.2.1
+       repository: https://grafana.github.io/helm-charts
+     - name: <new-app>
+       version: <version>
+       repository: <helm-repo-url>
    ```
 
-2. **Alternative: Deploy Helm charts via ArgoCD**:
-   - Use ArgoCD's Helm integration by specifying chart details in Application source
-   - Or add Helm chart to `argo/` directory and reference in ArgoCD Application
+2. **Configure values** in `argo/applications/values.yaml`:
+   ```yaml
+   grafana:
+     replicas: 1
+   <new-app>:
+     # custom values here
+   ```
 
-3. **Legacy method (deprecated)**: Manually apply YAML files from `k3s-configs/` using kubectl
+3. **Update Helm dependencies**:
+   ```bash
+   cd argo/applications
+   helm dependency update
+   ```
+
+4. **Commit and push changes**:
+   ```bash
+   git add argo/applications/
+   git commit -m "Add <new-app> to applications chart"
+   git push origin main
+   ```
+
+5. **ArgoCD will automatically sync** the changes (automated sync is enabled)
+   - Check status: `kubectl get application applications -n argocd`
+   - View in UI: https://192.168.3.201
+
+**Alternative: Create standalone ArgoCD Application**:
+For applications that don't fit the umbrella chart pattern, create a manifest in `k3s-configs/argocd-apps/`:
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: <app-name>
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/cfkoehler/pi-k3-install.git
+    targetRevision: main
+    path: <path-to-manifests>
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: <target-namespace>
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+```
+Then apply: `kubectl apply -f k3s-configs/argocd-apps/<app-name>.yaml`
 
 ### Storage Configuration
 - Longhorn requires nodes labeled with `storage: "longhorn"` due to nodeSelector in values
