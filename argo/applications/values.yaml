@@ -67,12 +67,13 @@ metricbeat:
           hosts: ["https://192.168.3.100:9200"]
           username: "${ELASTICSEARCH_USERNAME}"
           password: "${ELASTICSEARCH_PASSWORD}"
-          index: "metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
+          index: "k8s-metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
           ssl.verification_mode: none
 
         # Index template setup
-        setup.template.name: "metricbeat"
-        setup.template.pattern: "metricbeat-*"
+        setup.template.name: "k8s-metricbeat"
+        setup.template.pattern: "k8s-metricbeat-*"
+        setup.template.overwrite: true
         setup.ilm.enabled: false
 
         # Logging
@@ -149,12 +150,13 @@ metricbeat:
           hosts: ["https://192.168.3.100:9200"]
           username: "${ELASTICSEARCH_USERNAME}"
           password: "${ELASTICSEARCH_PASSWORD}"
-          index: "metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
+          index: "k8s-metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
           ssl.verification_mode: none
 
         # Index template setup
-        setup.template.name: "metricbeat"
-        setup.template.pattern: "metricbeat-*"
+        setup.template.name: "k8s-metricbeat"
+        setup.template.pattern: "k8s-metricbeat-*"
+        setup.template.overwrite: true
         setup.ilm.enabled: false
 
         # Logging
