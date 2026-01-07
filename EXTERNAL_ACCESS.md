@@ -144,10 +144,10 @@ NPM proxies to the K3s master IP + NodePort: `192.168.3.10:32583`
 
 ## Current External Services
 
-| Service | External URL | K3s Namespace | Internal Service | Port |
-|---------|-------------|---------------|------------------|------|
-| **ArgoCD** | https://argocd.homelab.connortech.me | argocd | argocd-server | 80 |
-| **Grafana** | https://grafana.homelab.connortech.me | monitoring | applications-grafana | 80 |
+| Service | External URL | K3s Namespace | Internal Service | Port | Notes |
+|---------|-------------|---------------|------------------|------|-------|
+| **ArgoCD** | https://argocd.homelab.connortech.me | argocd | argocd-server | 80 | Requires `--insecure` flag |
+| **Grafana** | https://grafana.homelab.connortech.me | monitoring | applications-grafana | 80 | - |
 
 ### Access Information
 
@@ -174,6 +174,8 @@ NPM proxies to the K3s master IP + NodePort: `192.168.3.10:32583`
 Follow these steps to expose a new K3s service externally with Authelia 2FA protection.
 
 ### Step 1: Create Kubernetes Ingress
+
+**Important**: Some applications (like ArgoCD) require special configuration when behind a reverse proxy. See the [troubleshooting section](#argocd-returns-307-redirect-or-https-errors) for details.
 
 Create an ingress resource for your service:
 
@@ -373,6 +375,36 @@ ArgoCD will automatically sync and create the ingress. Then proceed to **Step 2*
 ---
 
 ## Troubleshooting
+
+### ArgoCD Returns 307 Redirect or HTTPS Errors
+
+**Symptom**: ArgoCD redirects HTTP to HTTPS, causing infinite redirect loops or connection failures through NPM.
+
+**Cause**: ArgoCD server is not configured to accept HTTP connections (SSL terminated at NPM).
+
+**Solution**: Configure ArgoCD to run in insecure mode:
+
+```yaml
+# k3s-configs/argocd-values.yaml
+server:
+  extraArgs:
+    - --insecure
+```
+
+**Apply the fix**:
+```bash
+helm upgrade argocd argo/argo-cd -n argocd -f k3s-configs/argocd-values.yaml
+```
+
+**Verify**:
+```bash
+# Check --insecure flag is present
+kubectl get deployment argocd-server -n argocd -o yaml | grep insecure
+
+# Test ingress routing
+curl -H "Host: argocd.homelab.connortech.me" http://192.168.3.10:32583 -I
+# Should return HTTP 200, not 307
+```
 
 ### Service Not Accessible Externally
 
