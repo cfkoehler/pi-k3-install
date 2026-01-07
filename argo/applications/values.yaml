@@ -209,5 +209,5 @@ metricbeat:
       verbs: ["get"]
 
   # Image configuration
-  imageTag: "8.16.1"
+  imageTag: "8.5.1"
   imagePullPolicy: "IfNotPresent"
