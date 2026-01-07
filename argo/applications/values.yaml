@@ -69,6 +69,11 @@ metricbeat:
           password: "${ELASTICSEARCH_PASSWORD}"
           index: "metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
 
+        # Index template setup
+        setup.template.name: "metricbeat"
+        setup.template.pattern: "metricbeat-*"
+        setup.ilm.enabled: false
+
         # Logging
         logging.level: info
         logging.to_files: false
@@ -144,6 +149,11 @@ metricbeat:
           username: "${ELASTICSEARCH_USERNAME}"
           password: "${ELASTICSEARCH_PASSWORD}"
           index: "metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
+
+        # Index template setup
+        setup.template.name: "metricbeat"
+        setup.template.pattern: "metricbeat-*"
+        setup.ilm.enabled: false
 
         # Logging
         logging.level: info
