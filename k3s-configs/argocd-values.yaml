@@ -1,0 +1,12 @@
+server:
+  # Keep LoadBalancer for direct access if needed
+  service:
+    type: LoadBalancer
+
+  # Run in insecure mode for SSL termination at reverse proxy
+  extraArgs:
+    - --insecure
+
+  # Configure ingress settings
+  ingress:
+    enabled: false  # We manage ingress separately
