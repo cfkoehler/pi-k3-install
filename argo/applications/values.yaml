@@ -7,3 +7,207 @@ grafana:
       - grafana.homelab.connortech.me
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: web
+
+metricbeat:
+  # DaemonSet configuration - runs on all nodes for per-node metrics
+  daemonset:
+    enabled: true
+
+    metricbeatConfig:
+      metricbeat.yml: |
+        # System module - hardware metrics
+        metricbeat.modules:
+        - module: system
+          period: 10s
+          metricsets:
+            - cpu
+            - load
+            - memory
+            - network
+            - process
+            - process_summary
+          processes: ['.*']
+          process.include_top_n:
+            by_cpu: 5
+            by_memory: 5
+
+        - module: system
+          period: 1m
+          metricsets:
+            - filesystem
+            - fsstat
+          processors:
+            - drop_event.when.regexp:
+                system.filesystem.mount_point: '^/(sys|cgroup|proc|dev|etc|host|lib)($|/)'
+
+        # Kubernetes module - container/pod/node metrics
+        - module: kubernetes
+          metricsets:
+            - container
+            - node
+            - pod
+            - system
+            - volume
+          period: 10s
+          host: "${NODE_NAME}"
+          hosts: ["https://${NODE_NAME}:10250"]
+          bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          ssl.verification_mode: "none"
+          processors:
+            - add_kubernetes_metadata: ~
+
+        # Kubernetes events
+        - module: kubernetes
+          enabled: true
+          metricsets:
+            - event
+
+        # Output to Logstash
+        output.logstash:
+          hosts: ["192.168.3.100:5044"]
+          username: "${LOGSTASH_USERNAME}"
+          password: "${LOGSTASH_PASSWORD}"
+
+        # Logging
+        logging.level: info
+        logging.to_files: false
+
+    # Environment variables for credentials and node name
+    extraEnvs:
+      - name: LOGSTASH_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: metricbeat-logstash-credentials
+            key: username
+      - name: LOGSTASH_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: metricbeat-logstash-credentials
+            key: password
+      - name: NODE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
+
+    # Resource limits for Raspberry Pi
+    resources:
+      limits:
+        cpu: 200m
+        memory: 200Mi
+      requests:
+        cpu: 100m
+        memory: 150Mi
+
+    # Run on all nodes including master
+    tolerations:
+      - operator: Exists
+
+    # Host networking for accurate metrics
+    hostNetwork: true
+    hostPID: true
+
+    # Security context
+    securityContext:
+      runAsUser: 0  # Required for host metrics
+
+    # No additional secrets needed
+    secretMounts: []
+
+  # Deployment configuration - cluster-wide K8s state metrics
+  deployment:
+    enabled: true
+
+    metricbeatConfig:
+      metricbeat.yml: |
+        # Kubernetes state metrics via kube-state-metrics
+        metricbeat.modules:
+        - module: kubernetes
+          enabled: true
+          metricsets:
+            - state_node
+            - state_deployment
+            - state_replicaset
+            - state_statefulset
+            - state_pod
+            - state_container
+            - state_cronjob
+            - state_job
+          period: 10s
+          hosts: ["kube-state-metrics.monitoring.svc:8443"]
+          bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          ssl.verification_mode: "none"
+
+        # Output to Logstash
+        output.logstash:
+          hosts: ["192.168.3.100:5044"]
+          username: "${LOGSTASH_USERNAME}"
+          password: "${LOGSTASH_PASSWORD}"
+
+        # Logging
+        logging.level: info
+        logging.to_files: false
+
+    # Environment variables for credentials
+    extraEnvs:
+      - name: LOGSTASH_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: metricbeat-logstash-credentials
+            key: username
+      - name: LOGSTASH_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: metricbeat-logstash-credentials
+            key: password
+
+    # Resource limits for Raspberry Pi
+    resources:
+      limits:
+        cpu: 200m
+        memory: 200Mi
+      requests:
+        cpu: 100m
+        memory: 150Mi
+
+    # No additional secrets needed
+    secretMounts: []
+
+  # Single replica for cluster-wide metrics
+  replicas: 1
+
+  # Cluster role for Kubernetes API access
+  clusterRoleRules:
+    - apiGroups: [""]
+      resources:
+        - nodes
+        - namespaces
+        - events
+        - pods
+        - services
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["extensions"]
+      resources:
+        - replicasets
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["apps"]
+      resources:
+        - statefulsets
+        - deployments
+        - replicasets
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["batch"]
+      resources:
+        - jobs
+        - cronjobs
+      verbs: ["get", "list", "watch"]
+    - apiGroups: [""]
+      resources:
+        - nodes/stats
+      verbs: ["get"]
+    - nonResourceURLs:
+        - "/metrics"
+      verbs: ["get"]
+
+  # Image configuration
+  imageTag: "7.17.3"
+  imagePullPolicy: "IfNotPresent"

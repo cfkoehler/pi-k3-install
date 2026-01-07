@@ -2,3 +2,6 @@ dependencies:
   - name: grafana
     version: 7.2.1
     repository: https://grafana.github.io/helm-charts
+  - name: metricbeat
+    version: 7.17.3
+    repository: https://helm.elastic.co
