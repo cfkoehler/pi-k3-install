@@ -4,6 +4,6 @@ grafana:
     enabled: true
     ingressClassName: traefik
     hosts:
-      - grafana.local
+      - grafana.homelab.connortech.me
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: web
