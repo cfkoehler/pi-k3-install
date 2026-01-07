@@ -64,10 +64,11 @@ metricbeat:
 
         # Output to Elasticsearch
         output.elasticsearch:
-          hosts: ["http://192.168.3.100:9200"]
+          hosts: ["https://192.168.3.100:9200"]
           username: "${ELASTICSEARCH_USERNAME}"
           password: "${ELASTICSEARCH_PASSWORD}"
           index: "metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
+          ssl.verification_mode: none
 
         # Index template setup
         setup.template.name: "metricbeat"
@@ -145,10 +146,11 @@ metricbeat:
 
         # Output to Elasticsearch
         output.elasticsearch:
-          hosts: ["http://192.168.3.100:9200"]
+          hosts: ["https://192.168.3.100:9200"]
           username: "${ELASTICSEARCH_USERNAME}"
           password: "${ELASTICSEARCH_PASSWORD}"
           index: "metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
+          ssl.verification_mode: none
 
         # Index template setup
         setup.template.name: "metricbeat"
