@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository contains Ansible playbooks and Kubernetes configurations for deploying and managing a 5-node K3s cluster on Raspberry Pi hardware (mix of Pi 4s and Pi 3s). The cluster uses ArgoCD for GitOps-based application deployment, MetalLB for load balancing, Longhorn for distributed storage, and includes a monitoring stack (Prometheus/Grafana).
 
+**External Access**: The cluster is accessible externally via nginx-proxy-manager running on a separate host (192.168.1.161), which provides SSL termination, Authelia 2FA protection, and proxying to K3s services via Traefik. All external services are exposed under `*.homelab.connortech.me` domains.
+
 ## Ansible Inventory & Configuration
 
 - **Inventory**: `hosts` file defines the cluster topology
@@ -147,6 +149,15 @@ cd argo/longhorn && helm dependency update
 - Node-exporter runs as DaemonSet on all nodes
 - Grafana deployed via Helm (v7.2.1) with 1 replica
 
+**Network architecture**:
+- K3s cluster network: 192.168.3.0/24
+- Master node: 192.168.3.10
+- MetalLB IP pool: 192.168.3.200-192.168.3.250 (L2 mode, NOT routable from 192.168.1.x network)
+- Traefik LoadBalancer: 192.168.3.200 (also exposed via NodePort 32583 on master)
+- External proxy (nginx-proxy-manager): 192.168.1.161 (separate network)
+- **Important**: NPM cannot reach MetalLB IPs directly due to L2 ARP limitations across subnets
+- **Solution**: NPM proxies to K3s master IP + Traefik NodePort (192.168.3.10:32583)
+
 ## Important Patterns
 
 ### Adding New Nodes
@@ -236,6 +247,134 @@ Then apply: `kubectl apply -f k3s-configs/argocd-apps/<app-name>.yaml`
 - Longhorn requires nodes labeled with `storage: "longhorn"` due to nodeSelector in values
 - Label nodes: `kubectl label nodes <node-name> storage=longhorn`
 - Storage path on nodes: `/var/lib/longhorn`
+
+### Exposing Services Externally via nginx-proxy-manager
+
+**Architecture Overview**:
+```
+Internet (*.homelab.connortech.me)
+    ↓ DNS → 151.241.119.193
+nginx-proxy-manager (192.168.1.161)
+    ├─ SSL Termination (Let's Encrypt wildcard cert)
+    ├─ Authelia 2FA Protection
+    └─ Proxy to K3s
+         ↓ http://192.168.3.10:32583
+    Traefik NodePort
+         ├─ Host-based routing (via Host header)
+         └─ Services (ArgoCD, Grafana, etc.)
+```
+
+**Current External Services**:
+- ArgoCD: `https://argocd.homelab.connortech.me`
+- Grafana: `https://grafana.homelab.connortech.me`
+
+**To expose a new service externally**:
+
+1. **Create Ingress in K3s** with proper hostname:
+   ```yaml
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+     name: myapp
+     namespace: myapp
+     annotations:
+       traefik.ingress.kubernetes.io/router.entrypoints: web
+   spec:
+     ingressClassName: traefik
+     rules:
+     - host: myapp.homelab.connortech.me  # MUST use .homelab.connortech.me domain
+       http:
+         paths:
+         - path: /
+           pathType: Prefix
+           backend:
+             service:
+               name: myapp
+               port:
+                 number: 80
+   ```
+
+2. **Create NPM Proxy Host** (on 192.168.1.161 via NPM UI):
+   - **Domain Names**: `myapp.homelab.connortech.me`
+   - **Scheme**: `http`
+   - **Forward Hostname/IP**: `192.168.3.10` (K3s master)
+   - **Forward Port**: `32583` (Traefik NodePort)
+   - **Block Common Exploits**: ✅ ON
+   - **Websockets Support**: ✅ ON (if needed for real-time features)
+   - **SSL Tab**: Select `*.homelab.connortech.me` certificate, Force SSL ✅ ON
+
+   **Advanced Tab** (required):
+   ```nginx
+   # Preserve hostname for Traefik routing
+   proxy_set_header Host $host;
+   proxy_set_header X-Forwarded-Proto $scheme;
+   proxy_set_header X-Real-IP $remote_addr;
+
+   # Authelia 2FA Protection
+   auth_request /api/verify;
+   auth_request_set $target_url $scheme://$http_host$request_uri;
+   auth_request_set $user $upstream_http_remote_user;
+   auth_request_set $groups $upstream_http_remote_groups;
+   auth_request_set $name $upstream_http_remote_name;
+   auth_request_set $email $upstream_http_remote_email;
+   proxy_set_header Remote-User $user;
+   proxy_set_header Remote-Groups $groups;
+   proxy_set_header Remote-Name $name;
+   proxy_set_header Remote-Email $email;
+
+   error_page 401 =302 https://auth.homelab.connortech.me/?rd=$target_url;
+
+   location /api/verify {
+       internal;
+       proxy_pass http://authelia:9091/api/verify;
+       proxy_set_header Host $host;
+       proxy_set_header X-Original-URL $scheme://$http_host$request_uri;
+       proxy_set_header X-Forwarded-Method $request_method;
+       proxy_set_header X-Forwarded-Proto $scheme;
+       proxy_set_header X-Forwarded-Host $http_host;
+       proxy_set_header X-Forwarded-Uri $request_uri;
+       proxy_set_header X-Forwarded-For $remote_addr;
+       proxy_set_header Content-Length "";
+       proxy_set_header Connection "";
+       proxy_pass_request_body off;
+   }
+   ```
+
+3. **Optional: Configure Authelia access rules** (on NPM host):
+   Edit `~/homelab/authelia/config/configuration.yml`:
+   ```yaml
+   access_control:
+     rules:
+       - domain: myapp.homelab.connortech.me
+         policy: two_factor  # or one_factor, or bypass for local network
+         subject:
+           - "group:admins"  # optional: restrict to specific groups
+   ```
+   Then restart: `docker compose -f ~/homelab/authelia/docker-compose.yml restart authelia`
+
+4. **No DNS changes needed**: Wildcard `*.homelab.connortech.me` already points to NPM
+
+**Important Notes**:
+- All K3s ingress hostnames MUST use `*.homelab.connortech.me` domain
+- NPM Advanced tab config is REQUIRED to preserve Host header for Traefik routing
+- Authelia protection is optional but recommended for security
+- Test internally first: `curl -H "Host: myapp.homelab.connortech.me" http://192.168.3.10:32583`
+
+**For apps in the `argo/applications` umbrella chart**:
+Configure ingress in the app's values section:
+```yaml
+# argo/applications/values.yaml
+myapp:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - myapp.homelab.connortech.me
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web
+```
+
+See `EXTERNAL_ACCESS.md` for complete documentation of the external access architecture.
 
 ## Node Configuration Files
 
