@@ -70,14 +70,9 @@ metricbeat:
           index: "k8s-metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
           ssl.verification_mode: none
 
-        # Index template setup
-        setup.template.name: "k8s-metricbeat"
-        setup.template.pattern: "k8s-metricbeat-*"
-        setup.template.overwrite: true
+        # Disable all template management
+        setup.template.enabled: false
         setup.ilm.enabled: false
-
-        # Disable data streams (use traditional indices)
-        setup.template.data_stream.enabled: false
 
         # Logging
         logging.level: info
@@ -156,14 +151,9 @@ metricbeat:
           index: "k8s-metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
           ssl.verification_mode: none
 
-        # Index template setup
-        setup.template.name: "k8s-metricbeat"
-        setup.template.pattern: "k8s-metricbeat-*"
-        setup.template.overwrite: true
+        # Disable all template management
+        setup.template.enabled: false
         setup.ilm.enabled: false
-
-        # Disable data streams (use traditional indices)
-        setup.template.data_stream.enabled: false
 
         # Logging
         logging.level: info
