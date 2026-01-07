@@ -1,0 +1,15 @@
+---
+
+- name: restart k3s
+  systemd:
+    name: k3s
+    state: restarted
+    daemon_reload: yes
+  when: inventory_hostname in groups['master']
+
+- name: restart k3s-agent
+  systemd:
+    name: k3s-agent
+    state: restarted
+    daemon_reload: yes
+  when: inventory_hostname in groups['node']

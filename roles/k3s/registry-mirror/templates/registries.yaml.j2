@@ -1,0 +1,12 @@
+mirrors:
+  docker.io:
+    endpoint:
+      - "{{ registry_mirror_url }}"
+  registry-1.docker.io:
+    endpoint:
+      - "{{ registry_mirror_url }}"
+
+configs:
+  "{{ registry_mirror_url }}":
+    tls:
+      insecure_skip_verify: false
