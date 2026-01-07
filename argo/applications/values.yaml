@@ -76,6 +76,9 @@ metricbeat:
         setup.template.overwrite: true
         setup.ilm.enabled: false
 
+        # Disable data streams (use traditional indices)
+        setup.template.data_stream.enabled: false
+
         # Logging
         logging.level: info
         logging.to_files: false
@@ -158,6 +161,9 @@ metricbeat:
         setup.template.pattern: "k8s-metricbeat-*"
         setup.template.overwrite: true
         setup.ilm.enabled: false
+
+        # Disable data streams (use traditional indices)
+        setup.template.data_stream.enabled: false
 
         # Logging
         logging.level: info
