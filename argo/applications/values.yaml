@@ -1,2 +1,9 @@
 grafana:
   replicas: 1
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - grafana.local
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web
