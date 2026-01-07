@@ -2,5 +2,8 @@ dependencies:
 - name: grafana
   repository: https://grafana.github.io/helm-charts
   version: 7.2.1
-digest: sha256:d636497f8ce16fbc3cddd5b21d2a7205e00343b5de236b5bfcd73bd11c676627
-generated: "2026-01-07T16:45:48.687466446Z"
+- name: metricbeat
+  repository: https://helm.elastic.co
+  version: 7.17.3
+digest: sha256:95275f3ffc63dffb067c279ba402243780384ea307cfffd83a8f25bd9e490d24
+generated: "2026-01-07T22:04:02.00178451Z"
