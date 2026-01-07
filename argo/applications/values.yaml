@@ -62,11 +62,12 @@ metricbeat:
           metricsets:
             - event
 
-        # Output to Logstash
-        output.logstash:
-          hosts: ["192.168.3.100:5044"]
-          username: "${LOGSTASH_USERNAME}"
-          password: "${LOGSTASH_PASSWORD}"
+        # Output to Elasticsearch
+        output.elasticsearch:
+          hosts: ["http://192.168.3.100:9200"]
+          username: "${ELASTICSEARCH_USERNAME}"
+          password: "${ELASTICSEARCH_PASSWORD}"
+          index: "metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
 
         # Logging
         logging.level: info
@@ -74,12 +75,12 @@ metricbeat:
 
     # Environment variables for credentials and node name
     extraEnvs:
-      - name: LOGSTASH_USERNAME
+      - name: ELASTICSEARCH_USERNAME
         valueFrom:
           secretKeyRef:
             name: metricbeat-logstash-credentials
             key: username
-      - name: LOGSTASH_PASSWORD
+      - name: ELASTICSEARCH_PASSWORD
         valueFrom:
           secretKeyRef:
             name: metricbeat-logstash-credentials
@@ -137,11 +138,12 @@ metricbeat:
           bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
           ssl.verification_mode: "none"
 
-        # Output to Logstash
-        output.logstash:
-          hosts: ["192.168.3.100:5044"]
-          username: "${LOGSTASH_USERNAME}"
-          password: "${LOGSTASH_PASSWORD}"
+        # Output to Elasticsearch
+        output.elasticsearch:
+          hosts: ["http://192.168.3.100:9200"]
+          username: "${ELASTICSEARCH_USERNAME}"
+          password: "${ELASTICSEARCH_PASSWORD}"
+          index: "metricbeat-%{[agent.version]}-%{+yyyy.MM.dd}"
 
         # Logging
         logging.level: info
@@ -149,12 +151,12 @@ metricbeat:
 
     # Environment variables for credentials
     extraEnvs:
-      - name: LOGSTASH_USERNAME
+      - name: ELASTICSEARCH_USERNAME
         valueFrom:
           secretKeyRef:
             name: metricbeat-logstash-credentials
             key: username
-      - name: LOGSTASH_PASSWORD
+      - name: ELASTICSEARCH_PASSWORD
         valueFrom:
           secretKeyRef:
             name: metricbeat-logstash-credentials
