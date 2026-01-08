@@ -1,7 +1,4 @@
-glance:
-  # Replica count
-  replicas: 1
-
+common:
   # Image configuration (defaults to v0.8.4)
   image:
     repository: glanceapp/glance
@@ -17,11 +14,6 @@ glance:
       enabled: false  # TLS handled by nginx-proxy-manager
     annotations:
       traefik.ingress.kubernetes.io/router.entrypoints: web
-
-  # Service configuration
-  service:
-    type: ClusterIP
-    port: 8080
 
   # Resource limits for Raspberry Pi
   resources:
