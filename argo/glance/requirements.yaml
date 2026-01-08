@@ -1,0 +1,4 @@
+dependencies:
+  - name: glance
+    version: 0.0.10
+    repository: https://rubxkube.github.io/charts/
