@@ -5,3 +5,6 @@ dependencies:
   - name: metricbeat
     version: 8.5.1
     repository: https://helm.elastic.co
+  - name: glance
+    version: 0.0.10
+    repository: https://rubxkube.github.io/charts/

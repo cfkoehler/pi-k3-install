@@ -223,3 +223,34 @@ metricbeat:
   # Image configuration
   imageTag: "8.5.1"
   imagePullPolicy: "IfNotPresent"
+
+glance:
+  # Replica count
+  replicas: 1
+
+  # Ingress configuration for external access via Traefik
+  ingress:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: glance.homelab.connortech.me
+        paths:
+          - path: /
+            pathType: Prefix
+    annotations:
+      traefik.ingress.kubernetes.io/router.entrypoints: web
+    tls: []
+
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 8080
+
+  # Resource limits for Raspberry Pi
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
