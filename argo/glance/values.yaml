@@ -25,6 +25,14 @@ glance:
         cpu: 100m
         memory: 128Mi
 
+    # Environment variables from secrets
+    variables:
+      secret:
+        existingSecret:
+          - envName: PIHOLE_PASSWORD
+            name: glance-secrets
+            key: PIHOLE_PASSWORD
+
     # Custom dashboard configuration
     configMap:
       enabled: true
@@ -54,7 +62,7 @@ glance:
                             - type: dns-stats
                               service: pihole-v6
                               url: https://pihole.homelab.connortech.me
-                              password: piHolePass123!
+                              password: ${PIHOLE_PASSWORD}
                               cache: 5m
 
                         - size: full
@@ -97,7 +105,8 @@ glance:
                                   {{ range .monitorList }}
                                   <div class="monitor-item">
                                     <span>{{ .name }}</span>
-                                    {{ $monitor := index $.heartbeats (toString .id) }}
+                                    {{ $monitorId := printf "%v" .id }}
+                                    {{ $monitor := index $.heartbeats $monitorId }}
                                     {{ if $monitor }}
                                     <span class="monitor-status {{ if eq $monitor.status 1 }}up{{ else }}down{{ end }}">
                                       {{ if eq $monitor.status 1 }}●{{ else }}○{{ end }}
