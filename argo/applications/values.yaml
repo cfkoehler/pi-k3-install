@@ -228,11 +228,18 @@ sealed-secrets:
   # Controller name (kubeseal CLI expects sealed-secrets-controller by default)
   fullnameOverride: sealed-secrets-controller
 
-  # Resource limits for Raspberry Pi
+  # Resource limits for Raspberry Pi (increased for stability)
   resources:
     limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
       cpu: 100m
       memory: 128Mi
-    requests:
-      cpu: 50m
-      memory: 64Mi
+
+  # Additional environment variables for debugging
+  commandArgs:
+    - "--update-status"
+
+  # Log level
+  logLevel: info
