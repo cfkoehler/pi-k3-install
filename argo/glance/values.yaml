@@ -71,7 +71,7 @@ glance:
                         - size: small
                           widgets:
                             - type: weather
-                              location: Columbia, Maryland
+                              location: Columbia, Maryland, United States
 
                             - type: markets
                               markets:
