@@ -35,6 +35,87 @@ glance:
             - content:
                 glance.yml: |
                   pages:
+                    - name: Startpage
+                      columns:
+                        - size: small
+                          widgets:
+                            # Perplexity AI Search
+                            - type: search
+                              search-engine: https://www.perplexity.ai/search?q={QUERY}
+                              bangs:
+                                - title: Perplexity
+                                  shortcut: "!p"
+                                  url: https://www.perplexity.ai/search?q={QUERY}
+                                - title: Google
+                                  shortcut: "!g"
+                                  url: https://www.google.com/search?q={QUERY}
+
+                            # Pi-hole DNS Statistics
+                            - type: dns-stats
+                              service: pihole-v6
+                              url: https://pihole.homelab.connortech.me
+                              password: piHolePass123!
+                              cache: 5m
+
+                        - size: full
+                          widgets:
+                            # Homelab Service Monitoring
+                            - type: monitor
+                              cache: 1m
+                              sites:
+                                - title: ArgoCD
+                                  url: https://argocd.homelab.connortech.me
+                                  icon: si:argo
+                                - title: Grafana
+                                  url: https://grafana.homelab.connortech.me
+                                  icon: si:grafana
+                                - title: Nginx Proxy Manager
+                                  url: http://192.168.1.161:81
+                                  icon: si:nginx
+                                - title: Uptime Kuma
+                                  url: https://uptime.homelab.connortech.me
+                                  icon: si:uptimekuma
+                                - title: Pi-hole
+                                  url: https://pihole.homelab.connortech.me
+                                  icon: si:pihole
+                                - title: Glance
+                                  url: https://glance.homelab.connortech.me
+                                  icon: si:homeassistant
+
+                            # Uptime Kuma Detailed Monitor Status
+                            - type: custom-api
+                              title: Uptime Kuma Monitors
+                              url: https://uptime.homelab.connortech.me/api/status-page/status
+                              subrequests:
+                                heartbeats:
+                                  url: https://uptime.homelab.connortech.me/api/status-page/heartbeat/status
+                              cache: 10m
+                              template: |
+                                {{ range .publicGroupList }}
+                                <div class="monitor-group">
+                                  <h4>{{ .name }}</h4>
+                                  {{ range .monitorList }}
+                                  <div class="monitor-item">
+                                    <span>{{ .name }}</span>
+                                    {{ $monitor := index $.heartbeats (toString .id) }}
+                                    {{ if $monitor }}
+                                    <span class="monitor-status {{ if eq $monitor.status 1 }}up{{ else }}down{{ end }}">
+                                      {{ if eq $monitor.status 1 }}●{{ else }}○{{ end }}
+                                    </span>
+                                    {{ end }}
+                                  </div>
+                                  {{ end }}
+                                </div>
+                                {{ end }}
+
+                        - size: small
+                          widgets:
+                            - type: clock
+                              hour-format: 12h
+                              timezones:
+                                - timezone: America/New_York
+                                  label: Eastern
+
                     - name: Home
                       columns:
                         - size: small
