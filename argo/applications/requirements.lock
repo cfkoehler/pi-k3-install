@@ -5,5 +5,8 @@ dependencies:
 - name: metricbeat
   repository: https://helm.elastic.co
   version: 8.5.1
-digest: sha256:471427e372b0cdeaa761aa2f9deb2b6a7bd6efc671e8594e2c87b72f449cb3e1
-generated: "2026-01-08T22:11:08.334908521Z"
+- name: sealed-secrets
+  repository: https://bitnami-labs.github.io/sealed-secrets
+  version: 2.16.2
+digest: sha256:de8e51465f5459c4450e2a169eacf7256938eda5b6f220c2e3705c5770dc3fc6
+generated: "2026-01-09T01:07:37.606745024Z"
