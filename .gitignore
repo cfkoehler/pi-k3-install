@@ -1,3 +1,4 @@
 playbooks/testing.yml
 k3s-configs/docker-registry/registry.crt
 k3s-configs/docker-registry/registry.key
+k3s-configs/glance/glance-secrets.yaml
