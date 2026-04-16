@@ -26,6 +26,9 @@ spec:
       retries: 3
   values:
     # Redis configuration optimized for Raspberry Pi
+    image:
+      tag: 7.4.2-debian-12-r1
+
     architecture: standalone
 
     auth:
@@ -49,6 +52,8 @@ spec:
 
     metrics:
       enabled: true
+      image:
+        tag: 1.66.0-debian-12-r4
       resources:
         requests:
           cpu: 10m
