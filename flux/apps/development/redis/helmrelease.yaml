@@ -26,9 +26,6 @@ spec:
       retries: 3
   values:
     # Redis configuration optimized for Raspberry Pi
-    global:
-      storageClass: longhorn
-
     architecture: standalone
 
     auth:
@@ -45,8 +42,7 @@ spec:
           memory: 256Mi
 
       persistence:
-        enabled: true
-        size: 2Gi
+        enabled: false
 
     replica:
       replicaCount: 0
