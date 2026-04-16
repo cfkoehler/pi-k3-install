@@ -1,0 +1,62 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: redis
+  namespace: redis
+  labels:
+    managed-by: flux
+spec:
+  interval: 10m
+  chart:
+    spec:
+      chart: redis
+      version: '18.x'
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+        namespace: flux-system
+      interval: 12h
+  releaseName: redis
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Redis configuration optimized for Raspberry Pi
+    global:
+      storageClass: longhorn
+
+    architecture: standalone
+
+    auth:
+      enabled: true
+      password: "changeme123"
+
+    master:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 128Mi
+        limits:
+          cpu: 200m
+          memory: 256Mi
+
+      persistence:
+        enabled: true
+        size: 2Gi
+
+    replica:
+      replicaCount: 0
+
+    metrics:
+      enabled: true
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 50m
+          memory: 64Mi
