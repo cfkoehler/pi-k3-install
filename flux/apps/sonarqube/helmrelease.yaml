@@ -45,12 +45,12 @@ spec:
     # Persistent storage for SonarQube data (plugins, temp analysis files)
     persistence:
       enabled: true
-      storageClass: longhorn
+      storageClass: local-storage
       size: 10Gi
 
-    # Pin to worker nodes to avoid tainted master
+    # Pin to c-w1 where the local PVs are provisioned
     nodeSelector:
-      node-type: worker
+      kubernetes.io/hostname: c-w1
 
     # Traefik ingress for web UI access
     ingress:
@@ -72,7 +72,7 @@ spec:
         database: sonarqube
       primary:
         nodeSelector:
-          node-type: worker
+          kubernetes.io/hostname: c-w1
         resources:
           requests:
             cpu: 100m
@@ -82,7 +82,7 @@ spec:
             memory: 512Mi
         persistence:
           enabled: true
-          storageClass: longhorn
+          storageClass: local-storage
           size: 20Gi
 
     # Prometheus metrics endpoint
