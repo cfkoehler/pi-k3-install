@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarqube-db-data
+  namespace: sonarqube
+  labels:
+    managed-by: flux
+    app: sonarqube-db
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-storage
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube-db
+  namespace: sonarqube
+  labels:
+    managed-by: flux
+    app: sonarqube-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarqube-db
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: sonarqube-db
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: c-w1
+      containers:
+        - name: postgresql
+          image: postgres:15
+          env:
+            - name: POSTGRES_USER
+              value: sonarqube
+            - name: POSTGRES_PASSWORD
+              value: sonarqube
+            - name: POSTGRES_DB
+              value: sonarqube
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 300m
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: sonarqube-db-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube-db
+  namespace: sonarqube
+  labels:
+    managed-by: flux
+    app: sonarqube-db
+spec:
+  selector:
+    app: sonarqube-db
+  ports:
+    - port: 5432
+      targetPort: 5432

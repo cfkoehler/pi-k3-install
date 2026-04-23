@@ -54,7 +54,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: local-storage
   claimRef:
-    name: data-sonarqube-postgresql-0
+    name: sonarqube-db-data
     namespace: sonarqube
   hostPath:
     path: /opt/sonarqube/postgresql

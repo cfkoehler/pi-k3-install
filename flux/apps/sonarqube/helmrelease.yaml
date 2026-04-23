@@ -63,27 +63,18 @@ spec:
           path: /
           pathType: Prefix
 
-    # Bundled PostgreSQL (Bitnami subchart) for analysis history and trend data
+    # Disable bundled Bitnami PostgreSQL subchart — it pins to an old PG11
+    # image that has been removed from Docker Hub and has no ARM64 support.
+    # Using a standalone postgres:15 deployment instead (see postgres.yaml).
     postgresql:
-      enabled: true
-      auth:
-        username: sonarqube
-        password: sonarqube
-        database: sonarqube
-      primary:
-        nodeSelector:
-          kubernetes.io/hostname: c-w1
-        resources:
-          requests:
-            cpu: 100m
-            memory: 256Mi
-          limits:
-            cpu: 300m
-            memory: 512Mi
-        persistence:
-          enabled: true
-          storageClass: local-storage
-          size: 20Gi
+      enabled: false
+
+    # Point SonarQube at the standalone PostgreSQL service
+    jdbcOverwrite:
+      enable: true
+      jdbcUrl: "jdbc:postgresql://sonarqube-db:5432/sonarqube?socketTimeout=1500"
+      jdbcUsername: sonarqube
+      jdbcPassword: sonarqube
 
     # Prometheus metrics endpoint
     prometheusMonitoring:

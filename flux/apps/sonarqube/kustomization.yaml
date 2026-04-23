@@ -3,4 +3,5 @@ kind: Kustomization
 resources:
   - namespace.yaml
   - storage.yaml
+  - postgres.yaml
   - helmrelease.yaml
