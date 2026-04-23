@@ -79,3 +79,21 @@ spec:
   ports:
     - port: 5432
       targetPort: 5432
+---
+# Alias service matching the name the SonarQube chart's wait-for-db init
+# container always checks ({{ .Release.Name }}-postgresql), regardless of
+# whether the bundled postgresql subchart is enabled.
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube-postgresql
+  namespace: sonarqube
+  labels:
+    managed-by: flux
+    app: sonarqube-db
+spec:
+  selector:
+    app: sonarqube-db
+  ports:
+    - port: 5432
+      targetPort: 5432
