@@ -15,4 +15,8 @@ spec:
       kind: HelmRepository
       name: bitnami
       namespace: flux-system
+    - apiVersion: source.toolkit.fluxcd.io/v1beta2
+      kind: HelmRepository
+      name: sonarqube
+      namespace: flux-system
   timeout: 5m0s

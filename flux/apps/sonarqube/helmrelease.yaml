@@ -1,0 +1,91 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: sonarqube
+  namespace: sonarqube
+  labels:
+    managed-by: flux
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: sonarqube
+      version: "10.x.x"
+      sourceRef:
+        kind: HelmRepository
+        name: sonarqube
+        namespace: flux-system
+      interval: 12h
+  releaseName: sonarqube
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # Community Edition (open source)
+    edition: community
+
+    # JVM tuning for Raspberry Pi ARM64 constraints
+    # Web process handles the UI and API
+    jvmOpts: "-Xmx1500m -Xms512m -XX:+HeapDumpOnOutOfMemoryError"
+    # CE (Compute Engine) process handles background analysis
+    jvmCEOpts: "-Xmx512m -Xms128m -XX:+HeapDumpOnOutOfMemoryError"
+
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        cpu: 1000m
+        memory: 4Gi
+
+    # Persistent storage for SonarQube data (plugins, temp analysis files)
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 10Gi
+
+    # Pin to worker nodes to avoid tainted master
+    nodeSelector:
+      node-type: worker
+
+    # Traefik ingress for web UI access
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web
+      hosts:
+        - name: sonarqube.homelab.connortech.me
+          path: /
+          pathType: Prefix
+
+    # Bundled PostgreSQL (Bitnami subchart) for analysis history and trend data
+    postgresql:
+      enabled: true
+      auth:
+        username: sonarqube
+        password: sonarqube
+        database: sonarqube
+      primary:
+        nodeSelector:
+          node-type: worker
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 300m
+            memory: 512Mi
+        persistence:
+          enabled: true
+          storageClass: longhorn
+          size: 20Gi
+
+    # Prometheus metrics endpoint
+    prometheusMonitoring:
+      podMonitor:
+        enabled: false

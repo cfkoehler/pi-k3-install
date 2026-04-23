@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: sonarqube
+  namespace: flux-system
+  labels:
+    managed-by: flux
+spec:
+  interval: 12h
+  url: https://SonarSource.github.io/helm-chart-sonarqube
