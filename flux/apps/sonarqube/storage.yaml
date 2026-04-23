@@ -5,7 +5,7 @@ metadata:
   labels:
     managed-by: flux
 provisioner: kubernetes.io/no-provisioner
-volumeBindingMode: WaitForFirstConsumer
+volumeBindingMode: Immediate
 reclaimPolicy: Retain
 ---
 apiVersion: v1
