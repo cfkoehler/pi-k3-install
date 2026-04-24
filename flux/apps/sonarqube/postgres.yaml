@@ -1,3 +1,16 @@
+# The SonarQube chart reads SONAR_JDBC_PASSWORD from this secret regardless
+# of jdbcOverwrite — it's normally created by the bundled Bitnami subchart.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sonarqube-postgresql
+  namespace: sonarqube
+  labels:
+    managed-by: flux
+    app: sonarqube-db
+stringData:
+  postgresql-password: sonarqube
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
