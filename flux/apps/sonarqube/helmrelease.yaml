@@ -76,6 +76,20 @@ spec:
       jdbcUsername: sonarqube
       jdbcPassword: sonarqube
 
+    # The chart's init-fs script chowns data/temp/logs but omits extensions.
+    # Kubernetes creates the subPath directory as root-owned, so uid 1000
+    # can't write there. This extra init container fixes the ownership.
+    extraInitContainers:
+      - name: fix-extensions-perms
+        image: busybox:1
+        securityContext:
+          runAsUser: 0
+        command: ["sh", "-c", "chown -R 1000:0 /opt/sonarqube/extensions"]
+        volumeMounts:
+          - name: sonarqube
+            mountPath: /opt/sonarqube/extensions
+            subPath: extensions
+
     # Prometheus metrics endpoint
     prometheusMonitoring:
       podMonitor:
