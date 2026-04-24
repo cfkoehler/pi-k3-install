@@ -2,5 +2,16 @@
 
 - hosts: node
   gather_facts: yes
+  become: yes
   roles:
     - role: storage/diskSetup
+      when: var_storage | bool
+
+- hosts: master
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Label storage nodes for Longhorn
+      shell: kubectl label node {{ item }} storage=longhorn --overwrite
+      with_items: "{{ groups['node'] }}"
+      when: hostvars[item]['var_storage'] | bool

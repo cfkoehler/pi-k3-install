@@ -1,42 +1,43 @@
 ---
 
-- name: Install nfs-common
+- name: Install storage dependencies
   ansible.builtin.apt:
-    name: nfs-common
+    name:
+      - nfs-common
+      - open-iscsi
+      - util-linux
+      - cryptsetup
+      - dmsetup
     state: present
 
-- name: Install open-iscsi
-  ansible.builtin.apt:
-    name: open-iscsi
-    state: present
+- name: Enable and start iscsid
+  ansible.builtin.systemd:
+    name: iscsid
+    state: started
+    enabled: yes
+    daemon_reload: yes
 
-- name: Install util-linux
-  ansible.builtin.apt:
-    name: util-linux
-    state: present
+- name: Create 30GB Longhorn image file
+  command: fallocate -l 30G /var/longhorn.img
+  args:
+    creates: /var/longhorn.img
 
-- name: Wipe Storage Drives
-  shell: wipefs -a /dev/{{ var_disk }}
-
-- name: Format Storage Drives
-  filesystem:
+- name: Format Longhorn image as ext4
+  community.general.filesystem:
     fstype: ext4
-    dev: /dev/{{ var_disk }}
+    dev: /var/longhorn.img
 
-- name: Get Storage Drive UUID
-  shell: blkid -s UUID -o value /dev/{{ var_disk }}
-  register: var_uuid
-
-- name: Create longhorn mount path
-  file:
+- name: Create Longhorn mount directory
+  ansible.builtin.file:
     path: /var/lib/longhorn
     state: directory
     owner: root
     group: root
 
-- name: Mount Storage Drives
-  mount: 
+- name: Mount Longhorn image via loop device
+  ansible.posix.mount:
     path: /var/lib/longhorn
-    src: UUID={{ var_uuid.stdout }}
+    src: /var/longhorn.img
     fstype: ext4
+    opts: loop
     state: mounted

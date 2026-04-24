@@ -3,4 +3,6 @@ kind: Kustomization
 resources:
   - sources/bitnami.yaml
   - sources/sonarqube.yaml
+  - sources/longhorn.yaml
   - metallb
+  - longhorn

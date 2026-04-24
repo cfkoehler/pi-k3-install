@@ -11,12 +11,16 @@ spec:
     kind: GitRepository
     name: flux-system
   healthChecks:
-    - apiVersion: source.toolkit.fluxcd.io/v1beta2
+    - apiVersion: source.toolkit.fluxcd.io/v1
       kind: HelmRepository
       name: bitnami
       namespace: flux-system
-    - apiVersion: source.toolkit.fluxcd.io/v1beta2
+    - apiVersion: source.toolkit.fluxcd.io/v1
       kind: HelmRepository
       name: sonarqube
+      namespace: flux-system
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: HelmRepository
+      name: longhorn
       namespace: flux-system
   timeout: 5m0s

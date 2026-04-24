@@ -1,0 +1,59 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: longhorn
+  namespace: longhorn-system
+  labels:
+    managed-by: flux
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: longhorn
+      version: "1.7.x"
+      sourceRef:
+        kind: HelmRepository
+        name: longhorn
+        namespace: flux-system
+      interval: 12h
+  releaseName: longhorn
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    defaultSettings:
+      defaultDataPath: /var/lib/longhorn
+      defaultReplicaCount: 2
+      guaranteedInstanceManagerCPU: 6
+      orphanAutoDeletion: true
+      nodeDrainPolicy: always-allow
+
+    longhornManager:
+      nodeSelector:
+        storage: "longhorn"
+    longhornDriver:
+      nodeSelector:
+        storage: "longhorn"
+    longhornUI:
+      nodeSelector:
+        storage: "longhorn"
+
+    ingress:
+      enabled: true
+      ingressClassName: traefik
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web
+      host: longhorn.homelab.connortech.me
+
+    resources:
+      manager:
+        requests:
+          cpu: 100m
+          memory: 120Mi
+        limits:
+          cpu: 300m
+          memory: 300Mi
