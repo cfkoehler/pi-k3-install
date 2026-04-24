@@ -1,105 +1,112 @@
 # FluxCD Configuration
 
-This directory contains FluxCD configurations for the K3s homelab cluster. Flux runs alongside ArgoCD to provide a dual GitOps setup for learning and comparison.
+This directory contains FluxCD configurations for the K3s homelab cluster. Flux runs alongside ArgoCD in a dual GitOps setup — Flux manages infrastructure and developer tooling, ArgoCD manages observability and dashboard applications.
 
 ## Directory Structure
 
 ```
 flux/
-├── infrastructure/           # Platform-level components
-│   ├── sources/             # HelmRepository sources
-│   └── metallb/             # MetalLB configuration (IPAddressPool, L2Advertisement)
-├── apps/                    # Applications
-│   └── development/         # Learning/experimental workloads
-│       ├── whoami/          # Simple stateless demo app
-│       └── redis/           # Helm-based Redis deployment
+├── infrastructure/               # Platform-level components
+│   ├── sources/
+│   │   ├── bitnami.yaml          # HelmRepository: Bitnami charts
+│   │   └── sonarqube.yaml        # HelmRepository: SonarSource charts
+│   └── metallb/                  # MetalLB configuration (IPAddressPool, L2Advertisement)
+├── apps/                         # Applications
+│   ├── development/              # Experimental/utility workloads
+│   │   ├── whoami/               # Simple stateless demo app
+│   │   └── redis/                # Helm-based Redis deployment
+│   └── sonarqube/                # SonarQube code quality platform
+│       ├── namespace.yaml
+│       ├── storage.yaml          # StorageClass + pre-bound PVs (local hostPath on c-w1)
+│       ├── postgres.yaml         # PostgreSQL 15 Deployment + Services + Secret
+│       ├── helmrelease.yaml      # SonarQube HelmRelease (SonarSource chart)
+│       └── kustomization.yaml
 └── clusters/
-    └── homelab/             # This cluster
+    └── homelab/                  # This cluster
         ├── infrastructure.yaml   # Kustomization for infrastructure/
-        ├── apps.yaml            # Kustomization for apps/
-        └── flux-system/         # Auto-managed by Flux bootstrap
+        ├── apps.yaml             # Kustomization for apps/
+        └── flux-system/          # Auto-managed by Flux bootstrap
 ```
 
 ## Managed Resources
 
-Flux currently manages:
-- **whoami** (namespace: whoami): Simple stateless application for testing
-- **Redis** (namespace: redis): Helm-based Redis standalone instance
-- **MetalLB configs** (namespace: metallb-system): IPAddressPool and L2Advertisement
+| App | Namespace | Type | Notes |
+|-----|-----------|------|-------|
+| MetalLB config | metallb-system | Kustomization | IPAddressPool + L2Advertisement CRDs only (controller via Helm) |
+| whoami | whoami | Kustomization | Stateless demo for testing ingress |
+| Redis | redis | HelmRelease | Bitnami, standalone, no persistence |
+| SonarQube | sonarqube | HelmRelease + Kustomization | Code quality platform, pinned to c-w1 with local PVs |
 
 ## Namespace Separation
 
-- **ArgoCD manages**: `monitoring`, `default`, `argocd`
-- **Flux manages**: `whoami`, `redis`, `flux-system`, infrastructure configs
+- **Flux manages**: `whoami`, `redis`, `sonarqube`, `flux-system`, infrastructure CRDs
+- **ArgoCD manages**: `monitoring` (Grafana, Metricbeat), `default` (Glance dashboard), `argocd`
 
 ## GitOps Workflow
 
 1. Edit files in `flux/` directory
 2. Commit and push to `main` branch
-3. Flux detects changes within ~1 minute
-4. Resources are automatically reconciled
+3. Flux detects changes within ~10 minutes (or force with commands below)
+4. Resources are automatically reconciled and drift is corrected
 
 ## Useful Commands
 
 ```bash
 # Check Flux status
 flux check
-flux get all
+flux get all -A
 
 # Watch reconciliation
 flux get kustomizations --watch
 flux logs --follow
 
-# Check specific resources
-flux get sources git
-flux get helmreleases -A
-kubectl get all -n whoami
-kubectl get all -n redis
-
 # Force reconciliation
-flux reconcile kustomization flux-system --with-source
-flux reconcile kustomization apps
-flux reconcile kustomization infrastructure
+flux reconcile kustomization infrastructure --with-source
+flux reconcile kustomization apps --with-source
+flux reconcile helmrelease sonarqube -n sonarqube
+
+# Check HelmReleases
+flux get helmreleases -A
 
 # Suspend/resume
 flux suspend kustomization apps
 flux resume kustomization apps
 ```
 
+## SonarQube
+
+SonarQube Community Edition for static analysis and trend tracking of Java projects.
+
+- **URL**: `http://sonarqube.homelab.connortech.me` (internal) / `https://sonarqube.homelab.connortech.me` (via NPM)
+- **Version**: 24.12.0 (SonarQube 10.8.1 chart)
+- **Database**: Standalone `postgres:15` Deployment (not the bundled Bitnami subchart)
+- **Storage**: Local hostPath PVs on `c-w1`
+  - SonarQube data: 10Gi at `/opt/sonarqube/data`
+  - PostgreSQL data: 20Gi at `/opt/sonarqube/postgresql`
+- **Pinned to**: `c-w1` via `nodeSelector: kubernetes.io/hostname: c-w1`
+- **Default login**: `admin` / `admin` (forced change on first login)
+
+### Storage Architecture Note
+
+The SonarQube chart mounts the PVC via subPath for each of `data`, `temp`, `logs`, and `extensions`. The chart's built-in `init-fs` container only chowns `data`, `temp`, and `logs` — the `extensions` subPath directory is created by Kubernetes as root-owned and is not fixed by the chart. A `fix-extensions-perms` extra init container runs as root to chown `extensions` to uid 1000 before the main container starts.
+
+### PostgreSQL Note
+
+The SonarQube 10.8.1 chart bundles `bitnami/postgresql:10.15.0` which pins to PostgreSQL 11. That image has been removed from Docker Hub and was never built for ARM64. The bundled subchart is disabled (`postgresql.enabled: false`) and replaced with an explicit `postgres:15` Deployment. Two alias services are maintained:
+- `sonarqube-db` — the actual Deployment selector
+- `sonarqube-postgresql` — alias required by the chart's hardcoded `wait-for-db` init container
+
 ## External Access
 
 Applications with ingress are accessible via:
-- **whoami**: `https://whoami.homelab.connortech.me` (after NPM configuration)
+- **whoami**: `https://whoami.homelab.connortech.me`
+- **SonarQube**: `https://sonarqube.homelab.connortech.me` (requires NPM proxy host — see root README)
 
-Access flows through: Internet → nginx-proxy-manager (192.168.1.161) → K3s master (192.168.3.10:32583) → Traefik → Service
+Access flows: Internet → nginx-proxy-manager (192.168.1.161) → K3s master (192.168.3.10:32583) → Traefik → Service
 
-## Deployed Applications
+## Redis
 
-### whoami
-- **Type**: Stateless demo application
-- **Image**: traefik/whoami:v1.10.1
-- **Replicas**: 2
-- **Resources**: 10m CPU request, 50m limit, 16Mi RAM request, 64Mi limit
-- **Ingress**: whoami.homelab.connortech.me
+Bitnami Redis in standalone mode. Auth enabled with a placeholder password — for learning/testing only, not used in production workloads.
 
-### Redis
-- **Type**: Helm chart (Bitnami)
-- **Version**: 18.x
-- **Architecture**: Standalone (no replication)
-- **Storage**: 2Gi PVC via Longhorn
-- **Resources**: 100m CPU request, 200m limit, 128Mi RAM request, 256Mi limit
-- **Auth**: Enabled (password: changeme123 - for learning only)
-- **Metrics**: Enabled
-
-### MetalLB Configuration
-- **IPAddressPool**: 192.168.3.200-192.168.3.250
-- **L2Advertisement**: Enabled for default pool
-- **Note**: MetalLB controller itself is deployed via Helm, Flux only manages the configuration CRDs
-
-## Future Enhancements
-
-- Secret management with Mozilla SOPS or Sealed Secrets
-- Image automation for automatic updates
-- Multi-environment setup (staging/production)
-- Notification system (Slack/Discord)
-- Additional infrastructure migrations from k3s-configs/
+- **Architecture**: Standalone (no replication, no persistence)
+- **Resources**: 100m–200m CPU / 128–256Mi RAM
