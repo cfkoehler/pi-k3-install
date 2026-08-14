@@ -1,0 +1,70 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: open-webui
+  namespace: chatbot
+  labels:
+    managed-by: flux
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: open-webui
+      version: "15.2.x"
+      sourceRef:
+        kind: HelmRepository
+        name: open-webui
+        namespace: flux-system
+      interval: 12h
+  releaseName: open-webui
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    # We point at an external OpenAI-compatible router instead of running a
+    # local model, so the bundled Ollama subchart is unnecessary.
+    ollama:
+      enabled: false
+
+    # Pipelines extends Open WebUI with plugin middleware we don't need for
+    # a plain OpenAI-compatible passthrough — skip the extra pod on Pi hardware.
+    pipelines:
+      enabled: false
+
+    # Single replica doesn't need cross-pod websocket coordination; use the
+    # built-in in-memory manager instead of deploying a bundled Redis.
+    websocket:
+      manager: ""
+      redis:
+        enabled: false
+
+    # External OpenAI-compatible endpoint (bespoke router running on the LAN).
+    openaiBaseApiUrl: "http://ROUTER_LAN_IP:8090/v1" # TODO(connor): fill in real Mac LAN IP
+    openaiApiKeyExistingSecret: chatbot-router-credentials
+    openaiApiKeyExistingSecretKey: ROUTER_API_KEY
+
+    persistence:
+      enabled: true
+      storageClass: longhorn
+      size: 8Gi
+
+    # Sized for Raspberry Pi nodes — tune against `kubectl top pod` after
+    # first real use.
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+    ingress:
+      enabled: true
+      class: traefik
+      annotations:
+        traefik.ingress.kubernetes.io/router.entrypoints: web
+      host: chat.homelab.connortech.me

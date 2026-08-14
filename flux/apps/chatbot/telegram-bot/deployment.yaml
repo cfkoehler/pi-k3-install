@@ -1,0 +1,32 @@
+# TODO(connor): build and push this image before applying
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegram-bot
+  namespace: chatbot
+  labels:
+    app: telegram-bot
+    managed-by: flux
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telegram-bot
+  template:
+    metadata:
+      labels:
+        app: telegram-bot
+    spec:
+      containers:
+      - name: telegram-bot
+        image: registry.homelab.connortech.me/telegram-bot:latest
+        envFrom:
+        - secretRef:
+            name: telegram-bot-credentials
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi

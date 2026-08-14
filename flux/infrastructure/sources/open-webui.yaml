@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: open-webui
+  namespace: flux-system
+  labels:
+    managed-by: flux
+spec:
+  interval: 12h
+  url: https://helm.openwebui.com/

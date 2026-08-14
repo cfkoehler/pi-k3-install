@@ -4,5 +4,6 @@ resources:
   - sources/bitnami.yaml
   - sources/sonarqube.yaml
   - sources/longhorn.yaml
+  - sources/open-webui.yaml
   - metallb
   - longhorn
